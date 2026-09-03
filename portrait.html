@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Value Cabs — Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; background:#004b76; font-family:'Raleway',sans-serif; overflow:hidden; }
+
+#rotatePrompt {
+  display:none;
+  position:fixed; inset:0; background:#004b76;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:24px; text-align:center; padding:32px;
+}
+#rotatePrompt.show { display:flex; }
+
+.phone-icon { font-size:72px; animation:rock 1.5s ease-in-out infinite alternate; }
+@keyframes rock { from{transform:rotate(0deg)} to{transform:rotate(-90deg)} }
+.prompt-title { font-weight:900; font-size:clamp(18px,4vw,24px); color:#fff; text-transform:uppercase; letter-spacing:1px; }
+.prompt-sub { font-size:clamp(13px,2.5vw,16px); color:rgba(255,255,255,0.6); font-weight:500; line-height:1.6; max-width:280px; }
+
+#quizFrame { display:none; position:fixed; inset:0; border:none; width:100%; height:100%; }
+#quizFrame.show { display:block; }
+</style>
+</head>
+<body>
+<div id="rotatePrompt">
+  <div class="phone-icon">📱</div>
+  <div class="prompt-title">Please rotate your phone</div>
+  <div class="prompt-sub">Turn your phone to portrait mode to begin the quiz.</div>
+</div>
+<iframe id="quizFrame" src="" title="Safeguarding Quiz"></iframe>
+<script>
+/* Pass any session data through */
+try {
+  if(!sessionStorage.getItem('vc_driver_num')){
+    sessionStorage.setItem('vc_driver_num','TEST');
+    sessionStorage.setItem('vc_driver_name','Test Driver');
+    sessionStorage.setItem('vc_car_reg','TEST001');
+  }
+} catch(e){}
+
+function check(){
+  var isPortrait = window.innerHeight > window.innerWidth;
+  var prompt = document.getElementById('rotatePrompt');
+  var frame  = document.getElementById('quizFrame');
+  if(isPortrait){
+    prompt.classList.remove('show');
+    frame.classList.add('show');
+    if(!frame.src || frame.src === window.location.href || frame.src === ''){
+      frame.src = 'quiz.html';
+    }
+  } else {
+    prompt.classList.add('show');
+    frame.classList.remove('show');
+  }
+}
+
+check();
+window.addEventListener('resize', check);
+window.addEventListener('orientationchange', function(){ setTimeout(check, 300); });
+</script>
+</body>
+</html>
