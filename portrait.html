@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Value Cabs — Rotate</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100%; height:100%;
+  background:#004b76;
+  font-family:'Raleway',sans-serif;
+  overflow:hidden;
+}
+/* Always show the prompt — JS will redirect when portrait detected */
+#prompt {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:24px; text-align:center; padding:32px;
+  background:#004b76;
+}
+.phone-icon {
+  font-size:72px;
+  animation:rock 1.5s ease-in-out infinite alternate;
+}
+@keyframes rock {
+  from { transform:rotate(90deg); }
+  to   { transform:rotate(0deg); }
+}
+.title {
+  font-weight:900;
+  font-size:clamp(18px,4vw,24px);
+  color:#fff;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.sub {
+  font-size:clamp(13px,2.5vw,16px);
+  color:rgba(255,255,255,0.65);
+  font-weight:600;
+  line-height:1.65;
+  max-width:280px;
+}
+.arrow {
+  font-size:32px;
+  animation:bounce 1s ease-in-out infinite alternate;
+  color:#f0801e;
+}
+@keyframes bounce {
+  from { transform:translateY(0); }
+  to   { transform:translateY(8px); }
+}
+</style>
+</head>
+<body>
+<div id="prompt">
+  <div class="phone-icon">📱</div>
+  <div class="title">Please rotate your phone</div>
+  <div class="sub">Turn your phone to portrait mode to begin the quiz.</div>
+  <div class="arrow">↓</div>
+</div>
+<script>
+function goQuiz(){
+  window.location.href = 'quiz.html';
+}
+
+function checkOrientation(){
+  var isPortrait = window.innerHeight > window.innerWidth;
+  if(isPortrait){
+    goQuiz();
+  }
+  /* If landscape — prompt is already visible, keep waiting */
+}
+
+/* Check immediately on load */
+checkOrientation();
+
+/* Listen for orientation changes */
+window.addEventListener('orientationchange', function(){
+  setTimeout(checkOrientation, 350);
+});
+window.addEventListener('resize', function(){
+  setTimeout(checkOrientation, 200);
+});
+
+/* Try API lock — if it works, redirect immediately */
+try {
+  if(screen.orientation && screen.orientation.lock){
+    screen.orientation.lock('portrait-primary')
+      .then(function(){ goQuiz(); })
+      .catch(function(){ /* API not supported — rely on manual rotation */ });
+  }
+} catch(e){}
+</script>
+</body>
+</html>
