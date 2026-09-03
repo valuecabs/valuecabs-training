@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<title>Value Cabs — Safeguarding Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --o:#f0801e; --b:#0c84b9; --db:#004b76;
+  --w:#ffffff; --off:#f5f8fb; --brd:#d0e3ef;
+  --g:#27ae60; --r:#e74c3c;
+  --td:#002e4a; --tm:#5a7a90;
+}
+
+html, body {
+  width:100%; min-height:100%;
+  background:var(--w);
+  font-family:'Raleway',sans-serif;
+  color:var(--td);
+  -webkit-text-size-adjust:100%;
+  /* prevent horizontal scroll */
+  overflow-x:hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background:var(--db);
+  padding:14px 20px;
+  display:flex; align-items:center; justify-content:center;
+  position:sticky; top:0; z-index:50;
+}
+.topbar-title {
+  font-weight:800; font-size:13px;
+  letter-spacing:2px; text-transform:uppercase;
+  color:rgba(255,255,255,0.75);
+}
+
+/* ── PROGRESS ── */
+.prog-section {
+  background:var(--off);
+  border-bottom:1px solid var(--brd);
+  padding:12px 20px;
+  display:none;
+}
+.prog-row {
+  display:flex; justify-content:space-between;
+  align-items:center; margin-bottom:7px;
+}
+.prog-q-label {
+  font-size:11px; font-weight:800;
+  letter-spacing:2px; text-transform:uppercase; color:var(--o);
+}
+.prog-pct { font-size:11px; font-weight:700; color:var(--tm); }
+.prog-track {
+  width:100%; height:5px;
+  background:var(--brd); border-radius:3px; overflow:hidden;
+}
+.prog-fill {
+  height:100%;
+  background:linear-gradient(90deg,var(--o),var(--b));
+  border-radius:3px; transition:width .5s ease; width:0%;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; padding:24px 20px; max-width:580px; margin:0 auto; }
+.screen.on { display:block; animation:fadeUp .35s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── INTRO ── */
+.intro-head {
+  font-weight:900; font-size:clamp(22px,4vw,28px);
+  text-transform:uppercase; letter-spacing:1px;
+  color:var(--db); text-align:center; margin-bottom:8px;
+}
+.intro-sub {
+  font-size:14px; font-weight:600;
+  color:var(--tm); text-align:center;
+  line-height:1.6; margin-bottom:28px;
+}
+.start-btn {
+  width:100%; background:var(--o); color:#fff; border:none;
+  border-radius:50px; padding:16px 20px;
+  font-family:'Raleway',sans-serif; font-weight:800;
+  font-size:15px; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; touch-action:manipulation; -webkit-appearance:none;
+  transition:transform .15s;
+  box-shadow:0 4px 18px rgba(240,128,30,0.3);
+}
+.start-btn:active { transform:scale(0.97); }
+
+/* ── QUESTION ── */
+.q-num {
+  font-size:10px; font-weight:800;
+  letter-spacing:3px; text-transform:uppercase;
+  color:var(--o); margin-bottom:10px;
+}
+.scenario-box {
+  background:var(--off);
+  border:1px solid var(--brd);
+  border-left:4px solid var(--b);
+  border-radius:0 10px 10px 0;
+  padding:14px 16px; margin-bottom:16px;
+  font-size:14px; font-weight:700;
+  color:var(--td); line-height:1.65;
+}
+.scenario-label {
+  font-size:10px; font-weight:800;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--b); margin-bottom:6px;
+}
+.q-text {
+  font-weight:900; font-size:clamp(15px,2.5vw,18px);
+  color:var(--db); line-height:1.3; margin-bottom:16px;
+}
+
+/* ── ANSWERS ── */
+.answers { display:flex; flex-direction:column; gap:9px; margin-bottom:14px; }
+.ans {
+  width:100%; background:var(--w);
+  border:2px solid var(--brd); border-radius:12px;
+  padding:13px 14px;
+  display:flex; align-items:flex-start; gap:11px;
+  cursor:pointer;
+  font-family:'Raleway',sans-serif;
+  font-size:14px; font-weight:700;
+  color:var(--td); line-height:1.45; text-align:left;
+  -webkit-appearance:none; touch-action:manipulation;
+  transition:all .2s; min-height:50px;
+  box-shadow:0 1px 4px rgba(0,75,118,0.05);
+}
+.ans:hover:not(:disabled) {
+  background:var(--off); border-color:var(--b);
+  transform:translateX(3px);
+}
+.ans:disabled { cursor:default; transform:none; }
+.ans.correct { background:#edfbf1; border-color:var(--g); }
+.ans.wrong   { background:#fdf0ee; border-color:var(--r); opacity:0.75; }
+.ans.reveal  { background:#edfbf1; border-color:var(--g); opacity:0.9; }
+
+.ans-letter {
+  min-width:28px; height:28px; border-radius:50%;
+  background:var(--off); border:1.5px solid var(--brd);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:12px; color:var(--db); flex-shrink:0;
+  transition:all .2s;
+}
+.ans.correct .ans-letter { background:var(--g); border-color:var(--g); color:#fff; }
+.ans.wrong   .ans-letter { background:var(--r); border-color:var(--r); color:#fff; }
+.ans.reveal  .ans-letter { background:var(--g); border-color:var(--g); color:#fff; }
+
+/* ── FEEDBACK ── */
+.feedback {
+  border-radius:10px; padding:13px 15px;
+  display:none; margin-bottom:12px;
+  font-size:13px; font-weight:600; line-height:1.6;
+  animation:fadeUp .3s ease;
+}
+.feedback.on { display:block; }
+.fb-ok    { background:#edfbf1; border:1.5px solid #a8e6bc; border-left:5px solid var(--g); }
+.fb-wrong { background:#fdf0ee; border:1.5px solid #f5c6c0; border-left:5px solid var(--r); }
+.fb-title { font-weight:900; font-size:14px; margin-bottom:4px; }
+.fb-ok    .fb-title { color:var(--g); }
+.fb-wrong .fb-title { color:var(--r); }
+.fb-body  { color:var(--td); font-weight:600; }
+
+/* ── NEXT BUTTON ── */
+.next-btn {
+  width:100%; background:var(--db); color:#fff; border:none;
+  border-radius:50px; padding:15px 20px;
+  font-family:'Raleway',sans-serif; font-weight:800;
+  font-size:14px; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; touch-action:manipulation; -webkit-appearance:none;
+  transition:transform .15s; display:none;
+}
+.next-btn.on { display:block; animation:fadeUp .3s ease; }
+.next-btn:active { transform:scale(0.97); }
+
+/* ── RESULT ── */
+.result-wrap {
+  text-align:center;
+  display:flex; flex-direction:column;
+  align-items:center; gap:16px;
+  padding:28px 20px 50px;
+  max-width:580px; margin:0 auto;
+}
+.result-emoji { font-size:clamp(44px,9vw,64px); line-height:1; }
+.result-heading {
+  font-weight:900; font-size:clamp(18px,3.5vw,24px);
+  text-transform:uppercase; letter-spacing:1px;
+  color:var(--db); line-height:1.25;
+}
+.score-pill {
+  background:var(--off); border:2px solid var(--brd);
+  border-radius:50px; padding:10px 28px;
+  font-weight:900; font-size:clamp(18px,4vw,24px);
+  color:var(--td); letter-spacing:1px;
+}
+.score-pill span { color:var(--o); }
+.remember-bar {
+  width:100%;
+  background:#ffffff;
+  border:3px solid var(--o);
+  border-radius:12px;
+  padding:20px 18px;
+  text-align:center;
+}
+.rem-title {
+  font-weight:900; font-size:13px;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--o); margin-bottom:10px;
+}
+.rem-text {
+  font-size:15px; font-weight:700;
+  color:var(--db); line-height:1.8;
+  text-align:center;
+}
+.dso-line {
+  font-size:14px; font-weight:700; color:var(--db);
+}
+.dso-line strong { color:var(--o); }
+.end-btn {
+  width:100%; background:var(--o); color:#fff; border:none;
+  border-radius:50px; padding:16px 20px;
+  font-family:'Raleway',sans-serif; font-weight:800;
+  font-size:14px; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; touch-action:manipulation; -webkit-appearance:none;
+  box-shadow:0 4px 18px rgba(240,128,30,0.3);
+  transition:transform .15s;
+}
+.end-btn:active { transform:scale(0.97); }
+
+@media(max-width:400px){
+  .screen { padding:18px 14px; }
+  .result-wrap { padding:20px 14px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar"><div class="topbar-title">Safeguarding Quiz</div></div>
+
+<!-- PROGRESS -->
+<div class="prog-section" id="progSection">
+  <div class="prog-row">
+    <div class="prog-q-label" id="progLabel">Question 1 of 5</div>
+    <div class="prog-pct" id="progPct">0%</div>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+</div>
+
+<!-- ══ INTRO ══ -->
+<div class="screen on" id="s0">
+  <div class="intro-head">Welcome</div>
+  <div class="intro-sub">This quiz tests your knowledge from the training video you just watched. Please read each question carefully before answering.</div>
+  <button class="start-btn" onclick="startQuiz()">▶ &nbsp;Begin Quiz</button>
+</div>
+
+<!-- ══ Q1 ══ -->
+<div class="screen" id="s1">
+  <div class="scenario-box">
+    <div class="scenario-label">Scenario</div>
+    You pick up a passenger aged 14–16 at 11:30pm. They ask to go to multiple addresses in different areas. They're nervous and keep checking their phone which won't stop beeping.
+  </div>
+  <div class="q-text">What do you do?</div>
+  <div class="answers" id="a1">
+    <button class="ans" onclick="ans(this,1,false)"><span class="ans-letter">A</span>Continue without question</button>
+    <button class="ans" onclick="ans(this,1,true)"><span class="ans-letter">B</span>Ask calm, neutral questions and assess safety</button>
+    <button class="ans" onclick="ans(this,1,false)"><span class="ans-letter">C</span>Refuse the journey immediately</button>
+    <button class="ans" onclick="ans(this,1,false)"><span class="ans-letter">D</span>Confront them about suspicious behaviour</button>
+  </div>
+  <div class="feedback" id="f1"></div>
+  <button class="next-btn" id="n1" onclick="goNext(1)">Next Question &nbsp;›</button>
+</div>
+
+<!-- ══ Q2 ══ -->
+<div class="screen" id="s2">
+  <div class="scenario-box">
+    <div class="scenario-label">Scenario</div>
+    You pick up a passenger with someone who speaks for them, won't let them answer, and changes the destination mid-journey. The passenger looks very anxious.
+  </div>
+  <div class="q-text">What do you do?</div>
+  <div class="answers" id="a2">
+    <button class="ans" onclick="ans(this,2,false)"><span class="ans-letter">A</span>Ignore it — none of your business</button>
+    <button class="ans" onclick="ans(this,2,false)"><span class="ans-letter">B</span>Challenge the controlling person directly</button>
+    <button class="ans" onclick="ans(this,2,true)"><span class="ans-letter">C</span>Continue safely, observe and report concerns</button>
+    <button class="ans" onclick="ans(this,2,false)"><span class="ans-letter">D</span>Ask the passenger directly if they're being controlled</button>
+  </div>
+  <div class="feedback" id="f2"></div>
+  <button class="next-btn" id="n2" onclick="goNext(2)">Next Question &nbsp;›</button>
+</div>
+
+<!-- ══ Q3 ══ -->
+<div class="screen" id="s3">
+  <div class="scenario-box">
+    <div class="scenario-label">Scenario</div>
+    You pick up a heavily intoxicated teenager (~19/20). They're barely conscious and don't know their address. The taxi was booked by an older man who paid cash and left immediately.
+  </div>
+  <div class="q-text">What do you do?</div>
+  <div class="answers" id="a3">
+    <button class="ans" onclick="ans(this,3,false)"><span class="ans-letter">A</span>Drop them at the nearest location and leave</button>
+    <button class="ans" onclick="ans(this,3,false)"><span class="ans-letter">B</span>Leave them at the requested address and go</button>
+    <button class="ans" onclick="ans(this,3,true)"><span class="ans-letter">C</span>Try to ensure they reach a place of safety or get help</button>
+    <button class="ans" onclick="ans(this,3,false)"><span class="ans-letter">D</span>Refuse the journey</button>
+  </div>
+  <div class="feedback" id="f3"></div>
+  <button class="next-btn" id="n3" onclick="goNext(3)">Next Question &nbsp;›</button>
+</div>
+
+<!-- ══ Q4 ══ -->
+<div class="screen" id="s4">
+  <div class="scenario-box">
+    <div class="scenario-label">Scenario</div>
+    You regularly drive a 13-year-old from their care home to school. One morning they go very quiet, then ask: "Can you keep a secret? You won't tell anyone, will you?"
+  </div>
+  <div class="q-text">What do you do?</div>
+  <div class="answers" id="a4">
+    <button class="ans" onclick="ans(this,4,false)"><span class="ans-letter">A</span>Promise to keep it secret</button>
+    <button class="ans" onclick="ans(this,4,false)"><span class="ans-letter">B</span>Ask direct questions about what's going on</button>
+    <button class="ans" onclick="ans(this,4,false)"><span class="ans-letter">C</span>Ignore them or tell them to talk to someone else</button>
+    <button class="ans" onclick="ans(this,4,true)"><span class="ans-letter">D</span>Tell them they can talk to you, but you can't promise secrets — if you're worried about their safety, you may need to share it with someone who can help</button>
+  </div>
+  <div class="feedback" id="f4"></div>
+  <button class="next-btn" id="n4" onclick="goNext(4)">Next Question &nbsp;›</button>
+</div>
+
+<!-- ══ Q5 ══ -->
+<div class="screen" id="s5">
+  <div class="scenario-box">
+    <div class="scenario-label">Scenario</div>
+    You collect a child from their foster home. An adult you haven't met before is with them. The child seems withdrawn and avoids eye contact. The adult sits very close and nudges the child when you speak to them.
+  </div>
+  <div class="q-text">What do you do?</div>
+  <div class="answers" id="a5">
+    <button class="ans" onclick="ans(this,5,true)"><span class="ans-letter">A</span>Observe and report your concerns</button>
+    <button class="ans" onclick="ans(this,5,false)"><span class="ans-letter">B</span>Ignore it</button>
+    <button class="ans" onclick="ans(this,5,false)"><span class="ans-letter">C</span>Question the adult about their behaviour</button>
+    <button class="ans" onclick="ans(this,5,false)"><span class="ans-letter">D</span>Ask the child directly if they're safe</button>
+  </div>
+  <div class="feedback" id="f5"></div>
+  <button class="next-btn" id="n5" onclick="goNext(5)">See My Result &nbsp;›</button>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div class="result-wrap" id="resultWrap" style="display:none">
+  <!-- filled by JS -->
+</div>
+
+<script>
+var FORMS_URL = 'https://hooks.zapier.com/hooks/catch/24117118/4hf0q9f/'; // same webhook as video
+var MAX_ATTEMPTS = 3;
+var attemptNum = 1;
+/* Load attempt number from localStorage */
+try {
+  var stored = parseInt(localStorage.getItem('vc_attempt_num') || '0');
+  attemptNum = stored + 1;
+} catch(e){}
+
+/* ── Check if already completed or attempts exhausted ── */
+try {
+  if(localStorage.getItem('vc_completed') === 'YES') {
+    document.addEventListener('DOMContentLoaded', function(){
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#004b76;font-family:Raleway,sans-serif;text-align:center;padding:30px;"><div>'
+        + '<div style="font-size:56px;margin-bottom:16px">✅</div>'
+        + '<div style="font-weight:900;font-size:22px;color:#fff;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase;">Training Already Completed</div>'
+        + '<div style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;max-width:300px;margin:0 auto;">You have already completed this training. Your results have been recorded.<br><br>If you believe this is an error, please contact your manager on 02890 660099.</div>'
+        + '</div></div>';
+    });
+  }
+} catch(e){}
+
+var EXP = {
+  1:{
+    ok:  'Well done. Staying calm and asking neutral questions — such as "Are you okay?" — is exactly right. It keeps the passenger safe, does not alarm or embarrass them, and lets you assess the situation without making assumptions. A young person travelling alone late at night with unclear destinations is a genuine concern and your calm presence matters.',
+    bad: [
+      'Refusing the journey immediately abandons the passenger to whatever situation they are in. If they are already in danger, leaving them on the street at 11:30pm alone makes things significantly worse — not better. Your role is to keep them safe, not to remove yourself from the situation.',
+      'Calling 999 immediately without any immediate danger escalates the situation unnecessarily. It could frighten the passenger, alert anyone controlling them, and put both of you at risk. 999 is for immediate emergencies only.',
+      'Confronting someone directly about suspicious behaviour puts you and them at risk. It can trigger a dangerous reaction from anyone who may be controlling the passenger and can cause the passenger to shut down or flee.'
+    ]
+  },
+  2:{
+    ok:  'Correct. Completing the journey safely while quietly observing is the right approach. Noting the time, addresses and descriptions gives investigators useful information. Reporting to your DSO immediately after means the right people can act on it. This protects the passenger without putting either of you in danger.',
+    bad: [
+      'Ignoring controlling behaviour because you think it is "none of your business" means a vulnerable person gets no help at all. Controlling behaviour in a taxi — especially when the passenger looks frightened — is always a safeguarding concern regardless of the relationship between the two people.',
+      'Challenging the controlling person directly is dangerous. It alerts them that you have noticed something, which can cause them to become aggressive or put the passenger at greater risk after they leave your vehicle. Never confront a potential abuser directly.',
+      'Asking the passenger directly whether they are being controlled — in front of the person controlling them — puts the passenger in serious danger. They cannot answer honestly and it signals to the controller that you are suspicious, which can cause an immediate escalation.'
+    ]
+  },
+  3:{
+    ok:  'Correct. Your duty of care applies to vulnerable passengers regardless of their age. A barely conscious teenager who does not know their address and was left by an unknown adult is in a vulnerable situation. Ensuring they reach safety and reporting your concerns to your DSO is exactly the right thing to do.',
+    bad: [
+      'Dropping them at the nearest location and leaving abandons a vulnerable, barely conscious person in an unknown place. This puts them at serious risk of harm — they cannot protect themselves and have no way of getting help. This is a failure of your duty of care.',
+      'Leaving them at a requested address when they are barely conscious and the booking was made by someone else who immediately left is dangerous. You have no way of knowing if that address is safe or if anyone there will look after them.',
+      'Refusing the journey leaves a vulnerable teenager stranded and at risk. You have already picked them up — the responsible action is to ensure they reach a safe place, not to remove them from the only safe space they are currently in.'
+    ]
+  },
+  4:{
+    ok:  'Correct. Never promising secrecy is essential. Letting a child speak freely while being honest that you may need to share information if their safety is at risk is exactly right. This keeps trust without making a promise you cannot keep — and must not keep.',
+    bad: [
+      'Promising to keep a secret to a child is something you must never do. If a child is being harmed, that secret could prevent them from getting help. Promising secrecy also puts you in an impossible position — and may be exactly what someone who has coached the child is hoping you will do.',
+      'Asking direct questions about what is going on is a leading approach that can contaminate any future investigation. Children in safeguarding situations should not be formally questioned by drivers — that is for trained professionals. Your role is to listen, not to investigate.',
+      'Ignoring them or telling them to talk to someone else when a child is reaching out to you closes down the one moment they may have had to ask for help. Children in care often build more trust with regular drivers than with adults at home — your response matters.'
+    ]
+  },
+  5:{
+    ok:  'Correct. Observing carefully and reporting to your DSO after the journey is exactly right. You do not need proof to report — a concern is enough. Noting what you saw, the time, the addresses and descriptions gives investigators the information they need.',
+    bad: [
+      'Ignoring the signs means a child gets no help. A withdrawn child who avoids eye contact while an unknown adult nudges them when they try to speak is showing clear warning signs. Doing nothing is not a neutral action — it is a missed opportunity to protect a vulnerable child.',
+      'Questioning the adult about their behaviour alerts them that you are suspicious. This can cause them to become aggressive, change their behaviour, or put the child at greater risk after they leave your vehicle. Never confront a potential abuser directly.',
+      'Asking the child directly if they are safe — in front of an adult who may be controlling or harming them — puts the child in an impossible position. They cannot answer honestly and it signals to the adult that you have noticed something, which can escalate the danger.'
+    ]
+  }
+};
+
+var answers = {};
+var driverNum='', driverName='', carReg='';
+try {
+  driverNum  = sessionStorage.getItem('vc_driver_num')  || '';
+  driverName = sessionStorage.getItem('vc_driver_name') || '';
+  carReg     = sessionStorage.getItem('vc_car_reg')     || '';
+} catch(e){}
+
+/* Question order - randomised each attempt */
+function startQuiz(){
+  qOrder = shuffle([1,2,3,4,5]);
+  goTo(qOrder[0]);
+}
+function goNext(currentQ){
+  var idx=qOrder.indexOf(currentQ);
+  if(idx < qOrder.length-1){ goTo(qOrder[idx+1]); } else { showResult(); }
+}
+
+var qOrder = [1,2,3,4,5];
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+  }
+  return arr;
+}
+
+function goTo(q){
+  for(var i=0;i<=5;i++){
+    var el=document.getElementById('s'+i);
+    if(el) el.classList.remove('on');
+  }
+  var next=document.getElementById('s'+q);
+  if(next) next.classList.add('on');
+  if(q>=1){
+    document.getElementById('progSection').style.display='block';
+    /* Find position in shuffled order */
+    var pos=1;
+    for(var k=0;k<qOrder.length;k++){ if(qOrder[k]===q){ pos=k+1; break; } }
+    var pct=Math.round(((pos-1)/5)*100);
+    document.getElementById('progFill').style.width=pct+'%';
+    document.getElementById('progLabel').textContent='Question '+pos+' of 5';
+    document.getElementById('progPct').textContent=pct+'%';
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function ans(btn,qNum,isCorrect){
+  var container=document.getElementById('a'+qNum);
+  if(container.dataset.done) return;
+  container.dataset.done='1';
+  var btns=container.querySelectorAll('.ans');
+  btns.forEach(function(b){ b.disabled=true; });
+  if(isCorrect){
+    btn.classList.add('correct');
+  } else {
+    btn.classList.add('wrong');
+    /* Do NOT reveal correct answer - driver must figure it out on retake */
+  }
+  answers[qNum]=isCorrect;
+  var fb=document.getElementById('f'+qNum);
+  var exp=EXP[qNum];
+  var badText = '';
+  if(!isCorrect){
+    /* Find which answer was selected (A=0, B=1, C=2, D=3) */
+    var btns = document.getElementById('a'+qNum).querySelectorAll('.ans');
+    var selectedIdx = 0;
+    for(var bi=0;bi<btns.length;bi++){ if(btns[bi]===btn){ selectedIdx=bi; break; } }
+    /* Count which wrong option this is (skip the correct one) */
+    var wrongIdx = 0;
+    var correctIdx = -1;
+    for(var bj=0;bj<btns.length;bj++){
+      if(btns[bj].getAttribute('onclick').indexOf('true')>-1){ correctIdx=bj; break; }
+    }
+    var wrongCount = 0;
+    for(var bk=0;bk<selectedIdx;bk++){
+      if(bk !== correctIdx) wrongCount++;
+    }
+    badText = Array.isArray(exp.bad) ? (exp.bad[wrongCount] || exp.bad[0]) : exp.bad;
+  }
+  fb.className='feedback on '+(isCorrect?'fb-ok':'fb-wrong');
+  fb.innerHTML='<div class="fb-title">'+(isCorrect?'✅ Correct!':'❌ Incorrect')+'</div>'
+              +'<div class="fb-body">'+(isCorrect?exp.ok:badText)+'</div>';
+  document.getElementById('n'+qNum).classList.add('on');
+  setTimeout(function(){ fb.scrollIntoView({behavior:'smooth',block:'nearest'}); },200);
+}
+
+function showResult(){
+  for(var i=0;i<=5;i++){
+    var el=document.getElementById('s'+i);
+    if(el) el.classList.remove('on');
+  }
+  document.getElementById('progSection').style.display='none';
+
+  var score=0;
+  for(var k=1;k<=5;k++){ if(answers[k]) score++; }
+
+  var now=new Date();
+  var dd=String(now.getDate()).padStart(2,'0');
+  var mm=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
+  var yyyy=now.getFullYear();
+  var hh=String(now.getHours()).padStart(2,'0');
+  var min=String(now.getMinutes()).padStart(2,'0');
+  var ts=dd+' '+mm+' '+yyyy+', '+hh+':'+min;
+
+  var passed=(score===5);
+  var rw=document.getElementById('resultWrap');
+  rw.style.display='flex';
+
+  if(passed){
+    rw.innerHTML=
+      '<div class="result-emoji">🎉</div>'
+     +'<div class="result-heading">Training Complete</div>'
+     +'<div class="score-pill">Score: <span>'+score+'/5</span></div>'
+     +'<div class="remember-bar" style="text-align:center;">'
+       +'<div class="rem-title">Remember</div>'
+       +'<div class="rem-text">You are the eyes and ears.<br>'
+       +'You don\'t need to investigate —<br>'
+       +'just <strong style="color:var(--o)">notice</strong>, '
+       +'<strong style="color:var(--o)">respond</strong> and '
+       +'<strong style="color:var(--o)">report</strong>.</div>'
+     +'</div>'
+     +'<div class="dso-line">DSO: Emma McCausland &nbsp;|&nbsp; <strong>02890 660099</strong></div>'
+     +'<button class="end-btn" onclick="endTraining()">END TRAINING</button>';
+  } else {
+    /* Save attempt number */
+    try { localStorage.setItem('vc_attempt_num', attemptNum); } catch(e){}
+    var attemptsLeft = MAX_ATTEMPTS - attemptNum;
+    var attemptsUsed = attemptNum + '/' + MAX_ATTEMPTS;
+
+    if(attemptsLeft > 0){
+      var attemptsLabel = attemptsLeft === 1 ? 'Last attempt remaining' : attemptsLeft + ' attempts remaining';
+      rw.innerHTML=
+        '<div class="result-emoji">❌</div>'
+       +'<div class="result-heading" style="color:#e74c3c;">Not Passed</div>'
+       +'<div class="score-pill" style="font-size:clamp(24px,4vw,32px);font-weight:900;padding:14px 36px;">'
+         +'<span style="color:#e74c3c;">'+score+'/5</span>'
+       +'</div>'
+       +'<div style="font-family:Raleway,sans-serif;font-size:11px;font-weight:800;color:#aaa;letter-spacing:2px;text-transform:uppercase;">'+attemptsLabel+'</div>'
+       +'<div style="font-family:Raleway,sans-serif;font-size:14px;font-weight:600;color:#5a7a90;line-height:1.75;text-align:center;max-width:300px;">'
+         +'You need <strong style="color:#002e4a;">5 out of 5</strong> to pass. Please watch the training again carefully before retaking.'
+       +'</div>'
+       +'<button style="width:100%;background:#f0801e;color:#fff;border:none;border-radius:50px;padding:15px 20px;font-family:Raleway,sans-serif;font-size:15px;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;box-shadow:none;-webkit-appearance:none;" onclick="retakeTraining()">↩ &nbsp;Retake Training</button>'
+       +'<div class="dso-line">DSO: Emma McCausland &nbsp;|&nbsp; <strong>02890 660099</strong></div>';
+    } else {
+      /* All attempts used */
+      rw.innerHTML=
+        '<div class="result-emoji">❌</div>'
+       +'<div class="result-heading" style="color:#e74c3c;">All Attempts Used</div>'
+       +'<div class="score-pill" style="font-size:clamp(14px,2.5vw,18px);padding:10px 24px;">'
+         +'3 out of 3 attempts completed'
+       +'</div>'
+       +'<div style="font-family:Raleway,sans-serif;font-size:14px;font-weight:600;color:#5a7a90;line-height:1.75;text-align:center;max-width:300px;">'
+         +'You have used all 3 attempts. Please contact your manager for further guidance.'
+       +'</div>'
+       +'<div class="dso-line">DSO: Emma McCausland &nbsp;|&nbsp; <strong>02890 660099</strong></div>';
+    }
+  }
+
+  window.scrollTo({top:0,behavior:'smooth'});
+  submitResults(score,ts,passed);
+}
+
+function submitResults(score,ts,passed){
+  var ansStr='';
+  for(var k=1;k<=5;k++){ ansStr+='Q'+k+':'+(answers[k]?'Correct':'Wrong')+' | '; }
+  ansStr=ansStr.slice(0,-3);
+  var payload={
+    driver_number: driverNum||'not provided',
+    driver_name:   driverName||'not provided',
+    car_reg:       carReg||'not provided',
+    timestamp:     ts,
+    quiz_score:    'Score: ' + score + '/5',
+    result:        passed ? 'PASS' : 'FAIL',
+    attempt:       'Attempt ' + attemptNum,
+    video_watched: 'YES',
+    answers:       ansStr
+  };
+  if(FORMS_URL&&FORMS_URL!==''){
+    fetch(FORMS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});
+  }
+  try{
+    sessionStorage.setItem('vc_quiz_score',score+'/5');
+    if(passed){
+      localStorage.setItem('vc_completed','YES');
+      localStorage.setItem('vc_completed_date', new Date().toLocaleDateString('en-GB'));
+    } else {
+      /* Failed - clear completion so they can redo */
+      localStorage.removeItem('vc_completed');
+    }
+  }catch(e){}
+}
+
+function retakeTraining(){
+  /* Clear session data so checkpoints collect fresh info */
+  try {
+    sessionStorage.removeItem('vc_driver_num');
+    sessionStorage.removeItem('vc_driver_name');
+    sessionStorage.removeItem('vc_car_reg');
+    /* Flag that this is a retake so index.html skips install screens */
+    sessionStorage.setItem('vc_retake', 'YES');
+  } catch(e){}
+  /* Unlock orientation before going back */
+  try { screen.orientation.unlock(); } catch(e){}
+  window.location.href = 'index.html';
+}
+
+function endTraining(){
+  window.close();
+  setTimeout(function(){
+    document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#004b76;font-family:Raleway,sans-serif;text-align:center;padding:30px;">'
+      +'<div>'
+      +'<div style="font-size:56px;margin-bottom:16px">✅</div>'
+      +'<div style="font-weight:900;font-size:20px;color:#fff;letter-spacing:1px;margin-bottom:10px;">TRAINING COMPLETE</div>'
+      +'<div style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;max-width:280px;margin:0 auto;">Thank you for completing your mandatory safeguarding training.<br><br>You may now close this window.</div>'
+      +'</div></div>';
+  },300);
+}
+
+window.history.pushState(null,'',window.location.href);
+window.addEventListener('popstate',function(){ window.history.pushState(null,'',window.location.href); });
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+// Lock portrait for quiz on both platforms
+try {
+  if(screen.orientation && screen.orientation.lock){
+    screen.orientation.lock('portrait-primary').catch(function(){
+      screen.orientation.lock('portrait').catch(function(){});
+    });
+  }
+} catch(e){}
+</script>
+</body>
+</html>
